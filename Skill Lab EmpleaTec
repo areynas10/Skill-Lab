@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Lab - Expo Reclutamiento</title>
+    <style>
+        :root { --primary: #6366f1; --secondary: #f43f5e; --bg: #0f172a; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .container { width: 90%; max-width: 500px; text-align: center; padding: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); margin-top: 20px; border: 1px solid #334155; }
+        button { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: transform 0.2s; font-size: 1.1em; width: 100%; margin: 10px 0; }
+        button:active { transform: scale(0.95); }
+        .result-badge { font-size: 1.5em; color: #10b981; margin: 20px 0; font-weight: bold; }
+        #game-area { display: none; }
+        /* Estilos específicos para juegos rápidos */
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn-circle { width: 80px; height: 80px; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-menu">
+    <h1>🚀 Skill Lab</h1>
+    <p>Mide tu potencial en 45 segundos. ¿Qué reto eliges?</p>
+    <div class="card">
+        <button onclick="startBART()">🎈 Riesgo y Decisión (BART)</button>
+        <button onclick="startFlex()">🧠 Flexibilidad Mental</button>
+        <button onclick="startPriority()">⚡ Priorización Express</button>
+    </div>
+</div>
+
+<div class="container" id="game-area">
+    <h2 id="game-title">Juego</h2>
+    <div id="game-content" class="card"></div>
+    <button onclick="location.reload()" style="background:#475569; margin-top:20px;">Volver al Menú</button>
+</div>
+
+<script>
+    const area = document.getElementById('game-area');
+    const menu = document.getElementById('main-menu');
+    const content = document.getElementById('game-content');
+    const title = document.getElementById('game-title');
+
+    function showGame(name) {
+        menu.style.display = 'none';
+        area.style.display = 'block';
+        title.innerText = name;
+    }
+
+    // --- JUEGO 1: BART (RIESGO) ---
+    function startBART() {
+        showGame("Riesgo y Decisión");
+        let points = 0; let total = 0; let round = 1;
+        const popLimit = () => Math.floor(Math.random() * 12) + 2;
+        let limit = popLimit();
+
+        const updateBART = () => {
+            content.innerHTML = `
+                <p>Ronda: ${round}/3</p>
+                <div id="b" style="width:${40+points*15}px; height:${40+points*15}px; background:red; border-radius:50%; margin: 20px auto; transition: 0.1s;"></div>
+                <p>Puntos acumulados esta ronda: ${points}</p>
+                <button onclick="window.pump()">Inflar</button>
+                <button onclick="window.collect()" style="background:#10b981">Asegurar</button>
+            `;
+        };
+
+        window.pump = () => {
+            points++;
+            if(points >= limit) {
+                alert("¡PUM! Perdiste los puntos de esta ronda.");
+                window.collect(true);
+            } else updateBART();
+        };
+
+        window.collect = (popped = false) => {
+            if(!popped) total += points;
+            if(round < 3) {
+                round++; points = 0; limit = popLimit(); updateBART();
+            } else {
+                finish("Perfil: " + (total > 15 ? "Visionario Audaz" : "Estratega Prudente"), total + " pts");
+            }
+        };
+        updateBART();
+    }
+
+    // --- JUEGO 2: FLEXIBILIDAD (STROOP SIMPLIFICADO) ---
+    function startFlex() {
+        showGame("Flexibilidad Mental");
+        let score = 0; let timeLeft = 20;
+        const colors = ['RED', 'BLUE', 'GREEN'];
+        const hex = { 'RED': '#ef4444', 'BLUE': '#3b82f6', 'GREEN': '#22c55e' };
+
+        const nextRound = () => {
+            if(timeLeft <= 0) return;
+            const text = colors[Math.floor(Math.random()*3)];
+            const color = colors[Math.floor(Math.random()*3)];
+            content.innerHTML = `
+                <p>Presiona el color de la TINTA, no la palabra</p>
+                <h1 style="color:${hex[color]}; font-size: 3em;">${text}</h1>
+                <div class="grid-3">
+                    ${colors.map(c => `<button class="btn-circle" style="background:${hex[c]}" onclick="window.checkFlex('${c}', '${color}')"></button>`).join('')}
+                </div>
+                <p>Aciertos: ${score} | Tiempo: ${timeLeft}s</p>
+            `;
+        };
+
+        window.checkFlex = (chosen, correct) => {
+            if(chosen === correct) score++;
+            nextRound();
+        };
+
+        let timer = setInterval(() => {
+            timeLeft--;
+            if(timeLeft <= 0) {
+                clearInterval(timer);
+                finish("Perfil: " + (score > 12 ? "Agilidad Mental Top" : "Pensador Analítico"), score + " aciertos");
+            } else nextRound();
+        }, 1000);
+        nextRound();
+    }
+
+    // --- JUEGO 3: PRIORIZACIÓN (EL BUCKET) ---
+    function startPriority() {
+        showGame("Priorización Express");
+        let items = [
+            {n: "Crisis Cliente", v: 100}, {n: "Email rutinario", v: 10},
+            {n: "Proyecto VIP", v: 80}, {n: "Café con equipo", v: 20},
+            {n: "Reporte Mensual", v: 50}, {n: "Arreglar impresora", v: 5}
+        ].sort(() => Math.random() - 0.5);
+        
+        let selected = [];
+        const render = () => {
+            content.innerHTML = `<p>Solo puedes elegir 3 tareas. ¡Maximiza el valor!</p>`;
+            items.forEach((item, i) => {
+                if(!selected.includes(i)) {
+                    content.innerHTML += `<button onclick="window.selP(${i})">${item.n}</button>`;
+                }
+            });
+            if(selected.length === 3) {
+                let val = selected.reduce((acc, curr) => acc + items[curr].v, 0);
+                finish("Perfil: " + (val > 200 ? "Líder de Alto Impacto" : "Operativo Eficiente"), val + " valor");
+            }
+        };
+        window.selP = (i) => { selected.push(i); render(); };
+        render();
+    }
+
+    function finish(perfil, score) {
+        content.innerHTML = `
+            <div class="result-badge">¡Completado!</div>
+            <h3>${perfil}</h3>
+            <p>Tu resultado: ${score}</p>
+            <p style="font-size:0.8em; color:#94a3b8;">¡Toma una foto de este resultado y preséntalo con tu CV!</p>
+        `;
+    }
+</script>
+</body>
+</html>
